@@ -96,6 +96,8 @@ def generate_mcqs(text, number):
     format_instructions = output_parser.get_format_instructions()
 
     model = ChatGoogleGenerativeAI(model="gemini-pro", temperature=0.3)
+
+    # Define the prompt template
     prompt_template = """
         Given a text input, generate multiple choice questions (at least {number}) from it along with the correct answers.
         Question format:
@@ -103,17 +105,22 @@ def generate_mcqs(text, number):
         Text: {user_prompt}
     """
     
-    prompt = PromptTemplate(
-        template=prompt_template,
-        input_variables=["user_prompt", "number", "format_instructions"],
-        partial_variables={"format_instructions": format_instructions}
+    # Format the prompt with input text and number of MCQs
+    prompt = prompt_template.format(
+        user_prompt=text,
+        number=number,
+        format_instructions=format_instructions
     )
     
-    user_query = prompt.format(user_prompt=text, number=number)
-    user_query_output = model(user_query.to_messages())
+    # Directly pass the prompt to the model without using .to_messages()
+    user_query_output = model(HumanMessage(content=prompt))
+    
     output = user_query_output.content
     st.write(output)
+
+    # Parse the output using the custom JSON-like parser
     mcqs = parse_json_like(output)
+    
     return mcqs
 
 # Function to initialize session state for quiz
